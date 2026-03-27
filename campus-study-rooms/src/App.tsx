@@ -1,6 +1,7 @@
 import './App.css'
 import { useMemo, useState } from 'react'
 import RoomFilters, { type ActiveFilters } from './RoomFilters'
+import RoomDetails from './roomDetails'
 import { STUDY_ROOMS, type StudyRoom } from './rooms'
 
 // --- Availability helpers -------------------------------------------------
@@ -104,6 +105,9 @@ function App() {
   const [startTime, setStartTime] = useState<string>('')
   const [endTime, setEndTime] = useState<string>('')
 
+  // Currently selected room for details / booking
+  const [selectedRoom, setSelectedRoom] = useState<StudyRoom | null>(null)
+
   const handleFilterChange = (
     rooms: StudyRoom[],
     filters: ActiveFilters,
@@ -122,6 +126,26 @@ function App() {
       ),
     [filteredByRoomFilters, selectedDate, startTime, endTime],
   )
+
+  const handleSelectRoom = (room: StudyRoom): void => {
+    setSelectedRoom(room)
+  }
+
+  const handleRequestBooking = (room: StudyRoom): void => {
+    const dateLabel = selectedDate || 'no date selected'
+    const startLabel = startTime || 'no start time'
+    const endLabel = endTime || 'no end time'
+
+    // Simple front-end confirmation
+    // eslint-disable-next-line no-alert
+    alert(
+      `Booking requested for ${room.building} – Room ${room.roomNumber} on ${dateLabel} from ${startLabel} to ${endLabel}.`,
+    )
+  }
+
+  const handleCloseDetails = (): void => {
+    setSelectedRoom(null)
+  }
 
   return (
     <div className="app-root">
@@ -180,18 +204,25 @@ function App() {
             </div>
           </div>
 
-          <RoomList rooms={visibleRooms} />
+          <RoomList rooms={visibleRooms} onSelectRoom={handleSelectRoom} />
         </section>
       </main>
+
+      <RoomDetails
+        room={selectedRoom}
+        onClose={handleCloseDetails}
+        onRequestBooking={handleRequestBooking}
+      />
     </div>
   )
 }
 
 type RoomListProps = {
   rooms: StudyRoom[]
+  onSelectRoom: (room: StudyRoom) => void
 }
 
-function RoomList({ rooms }: RoomListProps) {
+function RoomList({ rooms, onSelectRoom }: RoomListProps) {
   if (!rooms.length) {
 		return <p>No rooms available.</p>
 	}
@@ -199,21 +230,25 @@ function RoomList({ rooms }: RoomListProps) {
 	return (
 		<ul className="room-list">
 			{rooms.map((room) => (
-				<li key={room.id} className="room-card">
-					<h3>
-						{room.building} – Room {room.roomNumber}
-					</h3>
-					<p>Capacity: {room.capacity} students</p>
-					<p>Floor: {room.floor}</p>
-					<p>
-						Features:
-						{room.features.length ? (
-							<span> {room.features.join(', ')}</span>
-						) : (
-							<span> None listed</span>
-						)}
-					</p>
-				</li>
+        <li
+          key={room.id}
+          className="room-card"
+          onClick={() => onSelectRoom(room)}
+        >
+          <h3>
+            {room.building} – Room {room.roomNumber}
+          </h3>
+          <p>Capacity: {room.capacity} students</p>
+          <p>Floor: {room.floor}</p>
+          <p>
+            Features:
+            {room.features.length ? (
+              <span> {room.features.join(', ')}</span>
+            ) : (
+              <span> None listed</span>
+            )}
+          </p>
+        </li>
 			))}
 		</ul>
 	)
